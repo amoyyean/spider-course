@@ -8,10 +8,10 @@ import os
 import time
 import urllib2
 import urlparse
-from bs4 import BeautifulSoup  # 用于解析网页中文, 安装:pip install beautifulsoup4.
-# Windows环境下需要在命令行模式里并在安装pip的目录下运行,比如D:\Python27\Scripts.
-# PyCharm可以直接在Project Interpretr界面安装各种package.
-
+from bs4 import BeautifulSoup
+"""
+用于解析网页中文, 安装:pip install beautifulsoup4.Windows环境下需要在命令行模式里并在安装pip的目录下运行,比如D:\Python27\Scripts.PyCharm可以直接在Project Interpretr界面安装各种package.
+"""
 
 def download(url, retry=2):
     """
@@ -38,41 +38,45 @@ def download(url, retry=2):
     time.sleep(1) #等待1s，避免对服务器造成压力，也避免被服务器屏蔽爬取
     return html
 
-def crawled_links(url_seed, url_root):
+def crawl_article_images(post_url):
     """
-    抓取文章链接
-    :param url_seed: 下载的种子页面地址
-    :param url_root: 爬取网站的根目录
-    :return: 需要爬取的页面
+    抓取文章中图片链接
+    :param post_url: 文章页面
     """
-    crawled_url = set()  # 需要爬取的页面
-    i = 1
-    flag = True #标记是否需要继续爬取
+    image_url = set()  # 爬取的图片链接
+    flag = True # 标记是否需要继续爬取
     while flag:
-        url = url_seed % i #真正爬取的页面
-        i += 1 #下一次需要爬取的页面
-
-        html = download(url) #下载页面
-        if html == None: #下载页面为空，表示已爬取到最后
+        html = download(post_url) # 下载页面
+        if html == None:
             break
 
-        soup = BeautifulSoup(html, "html.parser") #格式化爬取的页面数据
-        links = soup.find_all('a', {'class': 'title'}) #获取标题元素
-        if links.__len__() == 0: #爬取的页面中已无有效数据，终止爬取
-            flag = False
+        soup = BeautifulSoup(html, "html.parser") # 格式化爬取的页面数据
+        title = soup.find('h1', {'class': 'title'}).text  # 获取文章标题
+        imagesdiv = soup.find_all('div', {'class': 'image-package'}) # 获取文章图片div元素
+        if imagesdiv.__len__() == 0: # 爬取的页面中无图片div元素，终止爬取
+            break
 
-        for link in links: #获取有效的文章地址
-            link = link.get('href')
-            if link not in crawled_url:
-                realUrl = urlparse.urljoin(url_root, link)
-                crawled_url.add(realUrl)  # 记录未重复的需要爬取的页面
-            else:
-                print 'end'
-                flag = False  # 结束抓取
+        i = 1
+        image_content = ''
+        for image in imagesdiv:
+            imagelink = image.img.get('data-original-src') # 获取图片的原始链接
+            imagecaption = image.find('div', {'class': 'image-caption'}).text # 获取图片的标题
+            image_content += str(i) + '.' + (unicode(imagecaption).encode('utf-8', errors='ignore')) + ':'+ (unicode(imagelink).encode('utf-8', errors='ignore')) + '\n'
+            image_url.add(imagelink)  # 记录未重复的爬取的图片链接
+            i += 1
 
-    paper_num = crawled_url.__len__()
-    print 'total paper num: ', paper_num
-    return crawled_url
+        if os.path.exists('spider_output/') == False:  # 检查保存文件的地址
+            os.mkdir('spider_output')
+
+        file_name = 'spider_output/' + title + '_images.txt'  # 设置要保存的文件名
+        if os.path.exists(file_name) == False:
+            file = open('spider_output/' + title + '.txt', 'wb')  # 写文件
+            file.write(image_content)
+            file.close()
+        flag = False
+
+    image_num = image_url.__len__()
+    print 'total number of images in the article: ', image_num
 
 def crawled_page(crawled_url):
     """
@@ -97,4 +101,6 @@ def crawled_page(crawled_url):
         file.write(content)
         file.close()
 
-download('http://www.jianshu.com/p/10b429fd9c4d')
+crawl_article_images('http://www.jianshu.com/p/10b429fd9c4d')
+crawl_article_images('http://www.jianshu.com/p/faf2f4107b9b')
+crawl_article_images('http://www.jianshu.com/p/111')
