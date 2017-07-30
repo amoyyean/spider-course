@@ -7,7 +7,6 @@
 import os
 import time
 import urllib2
-import urlparse
 from bs4 import BeautifulSoup
 """
 用于解析网页中文, 安装:pip install beautifulsoup4.Windows环境下需要在命令行模式里并在安装pip的目录下运行,比如D:\Python27\Scripts.PyCharm可以直接在Project Interpretr界面安装各种package.
@@ -94,7 +93,7 @@ def crawl_article_text_link(post_url):
         title = soup.find('h1', {'class': 'title'}).text  # 获取文章标题
         article_content = soup.find('div', {'class': 'show-content'}) # 获取文章的内容div
         text_links = article_content.find_all('a', {'target': '_blank'})
-        if text_links.__len__() == 0: # 爬取的页面中无图片div元素，终止爬取
+        if text_links.__len__() == 0: # 爬取的页面中没有文字链元素，终止爬取
             break
 
         i = 1

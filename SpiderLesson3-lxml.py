@@ -9,7 +9,6 @@ import time
 import urllib2
 import lxml.html # lxml中的HTML返回结果解析模块
 import lxml.etree # 为了解决中文乱码而专门引入的lxml模块
-import urlparse
 
 
 def download(url, retry=2):
@@ -53,13 +52,12 @@ def crawl_article_images(post_url):
         # html_content = lxml.html.fromstring(page) # 格式化爬取的页面数据,fromstring函数未找到解决中文乱码的办法
         title = html_content.xpath('//h1[@class="title"]/text()')  # 获取文章标题
         image_link = html_content.xpath('//div/img/@data-original-src') # 获取图片的原始链接
-        image_caption = html_content.xpath('//div[@class="image-caption"]/text()')
+        image_caption = html_content.xpath('//div[@class="image-caption"]/text()') # 获取图片的标题
         if image_link.__len__() == 0: # 爬取的页面中无图片div元素，终止爬取
             break
 
         image_content = ''
         for i in range(image_link.__len__()):
-             # 获取图片的标题
             image_content += str(i + 1) + '. ' + (unicode(image_caption[i]).encode('utf-8', errors='ignore')) + ' : '+ image_link[i] + '\n'
 
         if os.path.exists('spider_output/') == False:  # 检查保存文件的地址
@@ -91,7 +89,7 @@ def crawl_article_text_link(post_url):
         title = html_content.xpath('//h1[@class="title"]/text()')  # 获取文章标题
         text_links = html_content.xpath('//div[@class="show-content"]//a/@href')
         text_links_label = html_content.xpath('//div[@class="show-content"]//a/text()')
-        if text_links.__len__() == 0: # 爬取的页面中无图片div元素，终止爬取
+        if text_links.__len__() == 0: # 爬取的页面中没有文字链元素，终止爬取
             break
 
         text_links_content = ''
