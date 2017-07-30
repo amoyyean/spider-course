@@ -52,17 +52,17 @@ def crawl_article_images(post_url):
 
         soup = BeautifulSoup(html, "html.parser") # 格式化爬取的页面数据
         title = soup.find('h1', {'class': 'title'}).text  # 获取文章标题
-        imagesdiv = soup.find_all('div', {'class': 'image-package'}) # 获取文章图片div元素
-        if imagesdiv.__len__() == 0: # 爬取的页面中无图片div元素，终止爬取
+        image_div = soup.find_all('div', {'class': 'image-package'}) # 获取文章图片div元素
+        if image_div.__len__() == 0: # 爬取的页面中无图片div元素，终止爬取
             break
 
         i = 1
         image_content = ''
-        for image in imagesdiv:
-            imagelink = image.img.get('data-original-src') # 获取图片的原始链接
-            imagecaption = image.find('div', {'class': 'image-caption'}).text # 获取图片的标题
-            image_content += str(i) + '.' + (unicode(imagecaption).encode('utf-8', errors='ignore')) + ':'+ (unicode(imagelink).encode('utf-8', errors='ignore')) + '\n'
-            image_url.add(imagelink)  # 记录未重复的爬取的图片链接
+        for image in image_div:
+            image_link = image.img.get('data-original-src') # 获取图片的原始链接
+            image_caption = image.find('div', {'class': 'image-caption'}).text # 获取图片的标题
+            image_content += str(i) + '. ' + (unicode(image_caption).encode('utf-8', errors='ignore')) + ' : '+ (unicode(image_link).encode('utf-8', errors='ignore')) + '\n'
+            image_url.add(image_link)  # 记录未重复的爬取的图片链接
             i += 1
 
         if os.path.exists('spider_output/') == False:  # 检查保存文件的地址
@@ -70,7 +70,7 @@ def crawl_article_images(post_url):
 
         file_name = 'spider_output/' + title + '_images.txt'  # 设置要保存的文件名
         if os.path.exists(file_name) == False:
-            file = open('spider_output/' + title + '.txt', 'wb')  # 写文件
+            file = open('spider_output/' + title + '_images.txt', 'wb')  # 写文件
             file.write(image_content)
             file.close()
         flag = False
@@ -78,7 +78,48 @@ def crawl_article_images(post_url):
     image_num = image_url.__len__()
     print 'total number of images in the article: ', image_num
 
-def crawled_page(crawled_url):
+def crawl_article_text_link(post_url):
+    """
+    抓取文章中的文字链接
+    :param post_url: 文章页面
+    """
+    text_link_url = set()  # 爬取的文字链接
+    flag = True # 标记是否需要继续爬取
+    while flag:
+        html = download(post_url) # 下载页面
+        if html == None:
+            break
+
+        soup = BeautifulSoup(html, "html.parser") # 格式化爬取的页面数据
+        title = soup.find('h1', {'class': 'title'}).text  # 获取文章标题
+        article_content = soup.find('div', {'class': 'show-content'}) # 获取文章的内容div
+        text_links = article_content.find_all('a', {'target': '_blank'})
+        if text_links.__len__() == 0: # 爬取的页面中无图片div元素，终止爬取
+            break
+
+        i = 1
+        text_links_content = ''
+        for link in text_links:
+            link_url = link.get('href') # 获取文字链的链接
+            link_label = link.text # 获取文字链的文本内容
+            text_links_content += str(i) + '. ' + (unicode(link_label).encode('utf-8', errors='ignore')) + ' : '+ (unicode(link_url).encode('utf-8', errors='ignore')) + '\n'
+            text_link_url.add(link_url)  # 记录未重复的爬取的图片链接
+            i += 1
+
+        if os.path.exists('spider_output/') == False:  # 检查保存文件的地址
+            os.mkdir('spider_output')
+
+        file_name = 'spider_output/' + title + '_article_text_links.txt'  # 设置要保存的文件名
+        if os.path.exists(file_name) == False:
+            file = open('spider_output/' + title + '_article_text_links.txt', 'wb')  # 写文件
+            file.write(text_links_content)
+            file.close()
+        flag = False
+
+    link_num = text_link_url.__len__()
+    print 'total number of text links in the article: ', link_num
+
+def crawl_page(crawled_url):
     """
     爬取文章内容
     :param crawled_url: 需要爬取的页面地址集合
@@ -89,14 +130,14 @@ def crawled_page(crawled_url):
         title = soup.find('h1', {'class': 'title'}).text #获取文章标题
         content = soup.find('div', {'class': 'show-content'}).text #获取文章内容
 
-        if os.path.exists('spider_res/') == False: #检查保存文件的地址
-            os.mkdir('spider_res')
+        if os.path.exists('spider_output/') == False: #检查保存文件的地址
+            os.mkdir('spider_output/')
 
-        file_name = 'spider_res/' + title + '.txt' #设置要保存的文件名
+        file_name = 'spider_output/' + title + '.txt' #设置要保存的文件名
         if os.path.exists(file_name):
             # os.remove(file_name) # 删除文件
             continue  # 已存在的文件不再写
-        file = open('spider_res/' + title + '.txt', 'wb') #写文件
+        file = open('spider_output/' + title + '.txt', 'wb') #写文件
         content = unicode(content).encode('utf-8', errors='ignore')
         file.write(content)
         file.close()
@@ -104,3 +145,7 @@ def crawled_page(crawled_url):
 crawl_article_images('http://www.jianshu.com/p/10b429fd9c4d')
 crawl_article_images('http://www.jianshu.com/p/faf2f4107b9b')
 crawl_article_images('http://www.jianshu.com/p/111')
+crawl_article_text_link('http://www.jianshu.com/p/10b429fd9c4d')
+crawl_article_text_link('http://www.jianshu.com/p/faf2f4107b9b')
+crawl_page(['http://www.jianshu.com/p/10b429fd9c4d'])
+crawl_page(['http://www.jianshu.com/p/faf2f4107b9b'])
