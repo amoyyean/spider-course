@@ -103,7 +103,7 @@ def crawl_article_text_link(post_url):
             link_url = link.get('href') # 获取文字链的链接
             link_label = link.text # 获取文字链的文本内容
             text_links_content += str(i) + '. ' + (unicode(link_label).encode('utf-8', errors='ignore')) + ' : '+ (unicode(link_url).encode('utf-8', errors='ignore')) + '\n'
-            text_link_url.add(link_url)  # 记录未重复的爬取的图片链接
+            text_link_url.add(link_url)  # 记录未重复的爬取的文字链的链接
             i += 1
 
         if os.path.exists('spider_output/') == False:  # 检查保存文件的地址
