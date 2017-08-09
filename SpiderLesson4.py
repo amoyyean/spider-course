@@ -48,7 +48,7 @@ def crawl_list(url):
     soup = BeautifulSoup(html, "html.parser")  # 格式化爬取的页面数据
     return soup.find(id='list-container').find('ul', {'class': 'note-list'})  # 文章列表
 
-def crawl_page_tag(list, url_root):
+def crawl_paper_tag(list, url_root):
     """
     获取文章列表详情
     :param list: 要爬取的文章列表
@@ -125,7 +125,7 @@ def clean_title(title):
 
 def crawl_papers(url_seed, url_root):
     """
-    抓取文章列表
+    抓取所有的文章列表
     :param url_seed: 下载的种子页面地址
     :param url_root: 爬取网站的根目录
     :return:
@@ -136,12 +136,10 @@ def crawl_papers(url_seed, url_root):
         url = url_seed % i  # 真正爬取的页面
         i += 1  # 下一次需要爬取的页面
         article_list = crawl_list(url)  # 下载文章列表
-        article_tag = crawl_page_tag(article_list, url_root)
+        article_tag = crawl_paper_tag(article_list, url_root)
         if article_tag.__len__() == 0:  # 下载文章列表返回长度为0的列表，表示已爬取到最后
             flag = False
 
 url_root = 'http://www.jianshu.com/'
 url_seed = 'http://www.jianshu.com/c/9b4685b6357c/?order_by=added_at&page=%d'
 crawl_papers(url_seed, url_root)
-# print (article_list)
-# paper_list = crawl_page_tag(article_list, url_root)
