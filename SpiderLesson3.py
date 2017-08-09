@@ -8,6 +8,7 @@ import os
 import time
 import urllib2
 from bs4 import BeautifulSoup
+import urlparse
 """
 用于解析网页中文, 安装:pip install beautifulsoup4.Windows环境下需要在命令行模式里并在安装pip的目录下运行,比如D:\Python27\Scripts.PyCharm可以直接在Project Interpretr界面安装各种package.
 """
@@ -127,6 +128,16 @@ def crawl_page(crawled_url):
         html = download(link)
         soup = BeautifulSoup(html, "html.parser")
         title = soup.find('h1', {'class': 'title'}).text #获取文章标题
+        """
+       替换特殊字符，否则根据文章标题生成文件名的代码会运行出错
+       """
+        title = title.replace('|', ' ')
+        title = title.replace('"', ' ')
+        title = title.replace('/', ',')
+        title = title.replace('<', ' ')
+        title = title.replace('>', ' ')
+        title = title.replace('\x08', '')
+        # print (title)
         content = soup.find('div', {'class': 'show-content'}).text #获取文章内容
 
         if os.path.exists('spider_output/') == False: #检查保存文件的地址
@@ -141,6 +152,43 @@ def crawl_page(crawled_url):
         file.write(content)
         file.close()
 
+def crawl_links(url_seed, url_root):
+    """
+    抓取文章链接
+    :param url_seed: 下载的种子页面地址
+    :param url_root: 爬取网站的根目录
+    :return: 需要爬取的页面链接
+    """
+    crawled_url = set()  # 需要爬取的页面
+    i = 1
+    flag = True  # 标记是否需要继续爬取
+    while flag:
+        url = url_seed % i  # 真正爬取的页面
+        i += 1  # 下一次需要爬取的页面
+
+        html = download(url)  # 下载页面
+        if html == None:  # 下载页面为空，表示已爬取到最后
+            break
+
+        soup = BeautifulSoup(html, "html.parser")  # 格式化爬取的页面数据
+        links = soup.find_all('a', {'class': 'title'})  # 获取标题元素
+        if links.__len__() == 0:  # 爬取的页面中已无有效数据，终止爬取
+            flag = False
+
+        for link in links:  # 获取有效的文章地址
+            link = link.get('href')
+            if link not in crawled_url:
+                realUrl = urlparse.urljoin(url_root, link)
+                crawled_url.add(realUrl)  # 记录未重复的需要爬取的页面
+            else:
+                print 'end'
+                flag = False  # 结束抓取
+
+    paper_num = crawled_url.__len__()
+    print 'total paper num: ', paper_num
+    return crawled_url
+
+"""
 crawl_article_images('http://www.jianshu.com/p/10b429fd9c4d')
 crawl_article_images('http://www.jianshu.com/p/faf2f4107b9b')
 crawl_article_images('http://www.jianshu.com/p/111')
@@ -148,3 +196,9 @@ crawl_article_text_link('http://www.jianshu.com/p/10b429fd9c4d')
 crawl_article_text_link('http://www.jianshu.com/p/faf2f4107b9b')
 crawl_page(['http://www.jianshu.com/p/10b429fd9c4d'])
 crawl_page(['http://www.jianshu.com/p/faf2f4107b9b'])
+"""
+
+url_root = 'http://www.jianshu.com/'
+url_seed = 'http://www.jianshu.com/c/9b4685b6357c/?page=%d'
+crawled_url = crawl_links(url_seed, url_root)
+crawl_page(crawled_url)
