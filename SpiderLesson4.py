@@ -85,7 +85,7 @@ def crawl_paper_tag(list, url_root):
             'like': metaLike,
             'reward': metaReward
         }
-        # print (paperAttr)
+        # print (paperAttr['title'])
         write_file(title, paperAttr)
         paperList.append(paperAttr)
     return paperList
@@ -137,6 +137,7 @@ def crawl_papers(url_seed, url_root):
         i += 1  # 下一次需要爬取的页面
         article_list = crawl_list(url)  # 下载文章列表
         article_tag = crawl_paper_tag(article_list, url_root)
+        # print (article_tag)
         if article_tag.__len__() == 0:  # 下载文章列表返回长度为0的列表，表示已爬取到最后
             flag = False
 
